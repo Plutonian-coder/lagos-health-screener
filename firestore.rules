@@ -1,0 +1,59 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- Helper Functions ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    function hasRole(role) {
+      return request.auth.token.role == role;
+    }
+    function isVerifiedHospital(uid) {
+       return get(/databases/$(database)/documents/hospitals/$(uid)).data.verified == true;
+    }
+
+    // --- Patients ---
+    match /patients/{patientId} {
+      // Patient can create their own profile
+      allow create: if isSignedIn() && isOwner(patientId);
+      // Patient can read/update their own; Admin can read all
+      allow read, update: if isSignedIn() && (isOwner(patientId) || hasRole('admin'));
+    }
+
+    // --- Hospitals ---
+    match /hospitals/{hospitalId} {
+      // Hospital can create own profile
+      allow create: if isSignedIn() && isOwner(hospitalId);
+      // Public read? Or only signed in? Let's say all signed in can see basic info
+      allow read: if isSignedIn(); 
+      // Only owner or admin can update
+      allow update: if isSignedIn() && (isOwner(hospitalId) || hasRole('admin'));
+    }
+
+    // --- Facilities (Clinics/Hospitals Listings) ---
+    match /facilities/{facilityId} {
+      // Only VERIFIED hospitals can create facilities
+      allow create: if isSignedIn() && hasRole('hospital') && isVerifiedHospital(request.auth.uid);
+      // Public read
+      allow read: if true;
+      // Owner or admin update
+      allow update, delete: if isSignedIn() && (resource.data.hospitalId == request.auth.uid || hasRole('admin'));
+    }
+
+    // --- Triage Sessions ---
+    match /triage_sessions/{sessionId} {
+      allow create: if isSignedIn();
+      allow read: if isSignedIn() && (resource.data.patientId == request.auth.uid || hasRole('admin') || hasRole('hospital'));
+    }
+    
+    // --- Bookings ---
+    match /bookings/{bookingId} {
+       allow create: if isSignedIn();
+       allow read: if isSignedIn() && (resource.data.patientId == request.auth.uid || resource.data.hospitalId == request.auth.uid);
+    }
+  }
+}
