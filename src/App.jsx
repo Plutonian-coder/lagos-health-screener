@@ -6,6 +6,7 @@ import AIInterview from './components/AIInterview';
 import HospitalMap from './components/HospitalMap';
 import DoctorMatcher from './components/DoctorMatcher';
 // import HospitalAdmin from './components/HospitalAdmin'; // REMOVED
+import { AnomalousMatterHero } from './components/ui/anomalous-matter-hero';
 import HospitalDashboard from './components/ui/hospital-dashboard';
 import { clinics as initialClinics } from './data/clinics';
 import { initialDoctors } from './data/doctors';
@@ -612,7 +613,7 @@ function App() {
   const [doctors, setDoctors] = useState(initialDoctors);
   const [clinicsData, setClinicsData] = useState(initialClinics);
   // Hardcoded key as requested by user
-  const [apiKey, setApiKey] = useState("AIzaSyDKG_J-TMbaQ42C2GJVJxLmtQHlrF_ssqc");
+  const [apiKey, setApiKey] = useState("AIzaSyB0zz7wpjuN9vQ1_kJOZfMgiNaX3lmfX2o");
   const [showKeyInput, setShowKeyInput] = useState(false);
 
   // Update a doctor's status
@@ -769,6 +770,16 @@ function App() {
       <Toaster />
       <div style={{ minHeight: '100vh', background: (view === 'wizard' || view === 'map' || view === 'interview' || view === 'summary' || view === 'crowdfunding') ? '#000000' : '#ffffff', color: (view === 'wizard' || view === 'map' || view === 'interview' || view === 'summary' || view === 'crowdfunding') ? '#ffffff' : '#000000', transition: 'background-color 0.5s ease' }}>
         {/* Patient Navigation Bar */}
+
+        {/* WELCOME CARDS */}
+        {view === 'wizard' && (
+          <AnomalousMatterHero
+            title="Screener Init"
+            subtitle="Welcome to AI Diagnosis"
+            description="Kindly fill this form and wait for our AI to ask questions on your health. Stay Safe."
+          />
+        )}
+
         {user.isAuthenticated && user.role === 'patient' && (view === 'wizard' || view === 'map' || view === 'patient-dashboard' || view === 'interview' || view === 'screener' || view === 'crowdfunding') && (
           <PatientNavbar currentView={view} onNavigate={setView} />
         )}

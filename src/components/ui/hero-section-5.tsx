@@ -6,6 +6,9 @@ import { ProgressiveBlur } from '@/components/ui/progressive-blur';
 import { cn } from '@/lib/utils';
 import { Menu, X, ChevronRight } from 'lucide-react';
 import { useScroll, motion } from 'framer-motion';
+import RuixenBentoCards from './ruixen-bento-cards';
+import FeaturedSectionStats from './featured-section-stats';
+import Testimonials from './testimonials-columns-1';
 
 const menuItems = [
     { name: 'Features', href: '#' },
@@ -55,7 +58,6 @@ const HeroHeader = ({ onLogin, onSignup }) => {
                                 aria-label="home"
                                 className="flex items-center space-x-2 text-white"
                             >
-                                <Logo />
                                 <span className="font-bold text-xl tracking-tighter">ExpressCare</span>
                             </a>
 
@@ -134,11 +136,11 @@ export function HeroSection({ onLogin, onSignup }) {
                 <div className="px-6 lg:px-12">
                     <div className="flex flex-col items-center text-center">
                         <h1 className="text-4xl font-bold tracking-tighter sm:text-6xl md:text-7xl lg:text-8xl text-white">
-                            Build <span className="bg-gradient-to-r from-[#39ff14] to-white bg-clip-text text-transparent">10x Faster</span> <br />
-                            with NS
+                            Get Care <span className="bg-gradient-to-r from-[#39ff14] to-white bg-clip-text text-transparent">10x Faster</span> <br />
+                            with ExpressCare
                         </h1>
                         <p className="mt-6 max-w-2xl text-lg text-zinc-400 sm:text-xl">
-                            Highly customizable components for building modern websites and applications you mean it.
+                            Instant AI diagnosis, rapid funding, and seamless hospital matching. The intelligent agent that sprints to save your life.
                         </p>
 
                         <div className="mt-12 flex flex-col items-center justify-center gap-2 sm:flex-row lg:justify-start">
@@ -147,7 +149,7 @@ export function HeroSection({ onLogin, onSignup }) {
                                 className="h-12 rounded-full pl-5 pr-3 text-base bg-[#39ff14] text-black hover:bg-[#32dd12] hover:shadow-[0_0_20px_rgba(57,255,20,0.3)] transition-all duration-300 font-bold"
                                 onClick={onSignup}
                             >
-                                <span className="whitespace-nowrap">Start Building</span>
+                                <span className="whitespace-nowrap">Get Diagnosed Now</span>
                                 <ChevronRight className="ml-1" />
                             </Button>
                             <Button
@@ -221,6 +223,9 @@ export function HeroSection({ onLogin, onSignup }) {
                             </div>
                         </div>
                     </div>
+                    <RuixenBentoCards />
+                    <FeaturedSectionStats />
+                    <Testimonials />
                 </section>
             </section>
         </div>

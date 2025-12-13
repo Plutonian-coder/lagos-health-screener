@@ -263,9 +263,6 @@ export function AnimatedLoginPage({ onLoginSuccess, onSignupSuccess, initialMode
             <div className="relative hidden w-1/2 lg:flex flex-col justify-between bg-black p-12 overflow-hidden border-r border-white/10">
                 <div className="relative z-20">
                     <div className="flex items-center gap-2 text-lg font-semibold text-white">
-                        <div className="size-8 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                            <Sparkles className="size-4 text-white" />
-                        </div>
                         <span>ExpressCare</span>
                     </div>
                 </div>
