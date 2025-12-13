@@ -5,14 +5,20 @@ import Summary from './components/Summary';
 import AIInterview from './components/AIInterview';
 import HospitalMap from './components/HospitalMap';
 import DoctorMatcher from './components/DoctorMatcher';
-import HospitalAdmin from './components/HospitalAdmin';
+// import HospitalAdmin from './components/HospitalAdmin'; // REMOVED
+import HospitalDashboard from './components/ui/hospital-dashboard';
 import { clinics as initialClinics } from './data/clinics';
 import { initialDoctors } from './data/doctors';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { Loader2, ShieldCheck, User, Building2, Stethoscope, ClipboardCheck, Clock, LogOut, HeartPulse } from 'lucide-react';
 import WarpShaderHero from './components/ui/WarpShaderHero';
 import { PromptInputBox } from './components/ui/ai-prompt-box';
+import { HeroSection } from './components/ui/hero-section-5';
 import { Toaster, toast } from 'sonner';
+import { PatientDashboard } from './components/ui/patient-dashboard';
+import CrowdFundingView from './components/CrowdFundingView';
+import { PatientNavbar } from './components/PatientNavbar'; // Import Navbar
+import SmoothWavyCanvas from './components/ui/smooth-wavy-canvas';
 
 // --- Hospital Onboarding Component ---
 function HospitalOnboarding({ onComplete, user, apiKey }) {
@@ -249,242 +255,268 @@ function HospitalOnboarding({ onComplete, user, apiKey }) {
     }
   };
 
-  const inputStyle = { width: '100%', padding: '12px', background: '#111', border: '1px solid #333', borderRadius: '6px', color: '#fff' };
+  // Styles
+  const accentGreen = '#39ff14';
 
   return (
-    <div className="container" style={{ maxWidth: '700px', margin: '40px auto' }}>
-      <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-        <h1 style={{ fontSize: '2rem' }}>
-          {step === 1 && "Facility Details"}
-          {step === 2 && "Register Doctors"}
-          {step === 3 && "Live Video Check"}
-        </h1>
-        <div style={{ display: 'flex', gap: '5px', justifyContent: 'center', marginTop: '10px' }}>
-          {[1, 2, 3].map(s => (
-            <div key={s} style={{ width: '40px', height: '4px', background: s <= step ? 'var(--accent-color)' : '#333', borderRadius: '2px' }}></div>
-          ))}
+    <div className="min-h-screen w-full bg-black text-white p-4 md:p-10 flex flex-col items-center">
+      {/* Background Gradient */}
+      <div className="fixed inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_10%,rgba(57,255,20,0.1),transparent_50%)]" />
+
+      <div className="relative z-10 w-full max-w-2xl">
+        <div className="text-center mb-10 space-y-4">
+          <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-white">
+            {step === 1 && "Facility Details"}
+            {step === 2 && "Register Doctors"}
+            {step === 3 && "Live Video Verification"}
+          </h1>
+          <p className="text-zinc-400 text-lg">
+            {step === 1 && "Let's start with the basics of your medical center."}
+            {step === 2 && "Add your primary specialists to the directory."}
+            {step === 3 && "Verify your facility's physical existence with AI."}
+          </p>
+
+          {/* Progress Bar */}
+          <div className="flex justify-center gap-2 mt-6">
+            {[1, 2, 3].map(s => (
+              <div
+                key={s}
+                className={`h-1.5 rounded-full transition-all duration-300 ${s <= step ? 'w-12 bg-[#39ff14] shadow-[0_0_10px_#39ff14]' : 'w-8 bg-zinc-800'}`}
+              />
+            ))}
+          </div>
         </div>
-      </div>
 
-      {step === 1 && (
-        <form onSubmit={handleInfoSubmit} className="card" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <input required type="text" placeholder="Hospital Name" value={info.name} onChange={e => setInfo({ ...info, name: e.target.value })} style={inputStyle} />
-          <input required type="text" placeholder="Full Address" value={info.address} onChange={e => setInfo({ ...info, address: e.target.value })} style={inputStyle} />
-          <input required type="tel" placeholder="Official Phone" value={info.phone} onChange={e => setInfo({ ...info, phone: e.target.value })} style={inputStyle} />
-          <select value={info.type} onChange={e => setInfo({ ...info, type: e.target.value })} style={inputStyle}>
-            <option>General Hospital</option>
-            <option>Specialist Clinic</option>
-          </select>
-          <button className="btn-primary">Next: Add Doctors →</button>
-        </form>
-      )}
-
-      {step === 2 && (
-        <form onSubmit={handleDoctorsSubmit} className="card" style={{ padding: '30px' }}>
-          <h3 style={{ marginBottom: '20px' }}>Add Staff (Max 10)</h3>
-          {doctorList.map((doc, i) => (
-            <div key={i} style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-              <input required placeholder="Doctor Name" value={doc.name} onChange={e => updateDoctor(i, 'name', e.target.value)} style={{ ...inputStyle, flex: 1 }} />
-              <select value={doc.specialty} onChange={e => updateDoctor(i, 'specialty', e.target.value)} style={{ ...inputStyle, flex: 1 }}>
-                <option>General Practitioner</option>
-                <option>Cardiologist</option>
-                <option>Dermatologist</option>
-                <option>Pediatrician</option>
-              </select>
+        {step === 1 && (
+          <form onSubmit={handleInfoSubmit} className="bg-zinc-900/50 backdrop-blur-md border border-zinc-800 rounded-2xl p-8 shadow-2xl space-y-6">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-zinc-400 mb-2">Hospital Name</label>
+                <input required type="text" placeholder="e.g. Lagos City General" value={info.name} onChange={e => setInfo({ ...info, name: e.target.value })}
+                  className="w-full bg-black border border-zinc-800 rounded-lg px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:border-[#39ff14] focus:ring-1 focus:ring-[#39ff14] transition-all" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-400 mb-2">Full Address</label>
+                <input required type="text" placeholder="Street, Area, State" value={info.address} onChange={e => setInfo({ ...info, address: e.target.value })}
+                  className="w-full bg-black border border-zinc-800 rounded-lg px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:border-[#39ff14] focus:ring-1 focus:ring-[#39ff14] transition-all" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-400 mb-2">Official Phone</label>
+                <input required type="tel" placeholder="+234..." value={info.phone} onChange={e => setInfo({ ...info, phone: e.target.value })}
+                  className="w-full bg-black border border-zinc-800 rounded-lg px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:border-[#39ff14] focus:ring-1 focus:ring-[#39ff14] transition-all" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-400 mb-2">Facility Type</label>
+                <select value={info.type} onChange={e => setInfo({ ...info, type: e.target.value })}
+                  className="w-full bg-black border border-zinc-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#39ff14] focus:ring-1 focus:ring-[#39ff14] transition-all">
+                  <option>General Hospital</option>
+                  <option>Specialist Clinic</option>
+                  <option>Diagnostic Centre</option>
+                </select>
+              </div>
             </div>
-          ))}
-          {doctorList.length < 10 && (
-            <button type="button" onClick={addDoctor} style={{ background: '#222', border: '1px dashed #444', color: '#888', width: '100%', padding: '10px', borderRadius: '6px', marginBottom: '20px' }}>+ Add Another Doctor</button>
-          )}
-          <button className="btn-primary" style={{ width: '100%' }}>Next: Start Live Video →</button>
-        </form>
-      )}
+            <button className="w-full bg-[#39ff14] text-black font-bold py-4 rounded-lg hover:bg-[#32cc11] transition-colors mt-4 text-lg">
+              continue →
+            </button>
+          </form>
+        )}
 
-      {step === 3 && (
-        <div className="card" style={{ padding: '40px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-          {!kycResult ? (
-            <>
-              <div style={{ position: 'relative', width: '100%', maxWidth: '400px', height: '300px', margin: '0 auto 20px', background: '#000', borderRadius: '12px', overflow: 'hidden' }}>
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: isCameraActive ? 'block' : 'none' }}
-                />
+        {step === 2 && (
+          <form onSubmit={handleDoctorsSubmit} className="bg-zinc-900/50 backdrop-blur-md border border-zinc-800 rounded-2xl p-8 shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-semibold text-white">Medical Staff</h3>
+              <span className="text-sm text-zinc-500">{doctorList.length} / 10 Added</span>
+            </div>
 
-                {!isCameraActive && (
-                  <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#666', gap: '10px' }}>
-                    <p>Camera is off or pending...</p>
-                    <button className="btn-secondary" onClick={startCamera}>Reconnect Camera</button>
-                  </div>
-                )}
-
-                {/* Scanning Overlay */}
-                {loading && (
-                  <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                    <Loader2 className="spin" size={50} color="var(--accent-color)" />
-                    <p style={{ color: '#fff', marginTop: '16px', fontWeight: 'bold' }}>Scanning Environment...</p>
-                    <p style={{ color: 'var(--accent-color)' }}>{scanProgress}%</p>
-                  </div>
-                )}
-              </div>
-
-              <h3>Live Facility Scan</h3>
-              <p style={{ color: '#888', marginBottom: '30px' }}>
-                Point camera at your facility. We will scan to verify it's a real medical environment.
-              </p>
-
-              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                {isCameraActive ? (
-                  <>
-                    <button className="btn-primary" onClick={performLiveAnalysis} disabled={loading} style={{ background: 'red', borderColor: 'red' }}>
-                      {loading ? "Scanning..." : "Scan"}
-                    </button>
-                    <button className="btn-secondary" onClick={toggleCamera} disabled={loading} title="Switch Camera" style={{ padding: '0 12px' }}>
-                      🔄
-                    </button>
-                  </>
-                ) : (
-                  <button className="btn-secondary" onClick={startCamera}>Start Camera</button>
-                )}
-              </div>
-            </>
-          ) : (
-            <div>
-              <div style={{ fontSize: '3rem', marginBottom: '20px' }}>
-                {kycResult.verified ? '✅' : '❌'}
-              </div>
-              <h2 style={{ color: kycResult.verified ? '#4CAF50' : '#ff4444', marginBottom: '10px' }}>
-                {kycResult.verified ? 'Verification Successful' : 'Verification Failed'}
-              </h2>
-              <p style={{ color: '#fff', marginBottom: '20px', fontSize: '1.1rem' }}>"{kycResult.reasoning}"</p>
-
-              {kycResult.verified ? (
-                <div style={{ color: 'var(--accent-color)' }}>
-                  <Loader2 className="spin" size={24} style={{ display: 'inline-block', marginRight: '8px' }} />
-                  Setting up Admin Dashboard...
+            <div className="space-y-4 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
+              {doctorList.map((doc, i) => (
+                <div key={i} className="flex flex-col sm:flex-row gap-3 bg-black/40 p-3 rounded-lg border border-zinc-800/50">
+                  <input required placeholder="Dr. Name" value={doc.name} onChange={e => updateDoctor(i, 'name', e.target.value)}
+                    className="flex-1 bg-transparent border-b border-zinc-800 px-2 py-2 text-white focus:outline-none focus:border-[#39ff14] transition-colors" />
+                  <select value={doc.specialty} onChange={e => updateDoctor(i, 'specialty', e.target.value)}
+                    className="flex-1 bg-transparent border-b border-zinc-800 px-2 py-2 text-zinc-300 focus:outline-none focus:border-[#39ff14] transition-colors">
+                    <option>General Practitioner</option>
+                    <option>Cardiologist</option>
+                    <option>Dermatologist</option>
+                    <option>Pediatrician</option>
+                    <option>Neurologist</option>
+                    <option>Surgeon</option>
+                  </select>
                 </div>
-              ) : (
-                <button className="btn-secondary" onClick={() => { setKycResult(null); startCamera(); }}>Try Again</button>
-              )}
+              ))}
             </div>
-          )}
-        </div>
-      )}
+
+            {doctorList.length < 10 && (
+              <button type="button" onClick={addDoctor} className="w-full py-3 mt-4 border border-dashed border-zinc-700 text-zinc-400 rounded-lg hover:border-[#39ff14] hover:text-[#39ff14] transition-all">
+                + Add Another Specialist
+              </button>
+            )}
+
+            <button className="w-full bg-[#39ff14] text-black font-bold py-4 rounded-lg hover:bg-[#32cc11] transition-colors mt-8 text-lg">
+              Proceed to Verification →
+            </button>
+          </form>
+        )}
+
+        {step === 3 && (
+          <div className="bg-zinc-900/50 backdrop-blur-md border border-zinc-800 rounded-2xl p-8 shadow-2xl text-center">
+            {!kycResult ? (
+              <>
+                <div className="relative w-full max-w-md mx-auto aspect-video bg-black rounded-xl overflow-hidden border border-zinc-800 mb-6 group">
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className={`w-full h-full object-cover transition-opacity duration-500 ${isCameraActive ? 'opacity-100' : 'opacity-0'}`}
+                  />
+
+                  {!isCameraActive && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-500 gap-4">
+                      <div className="w-16 h-16 rounded-full bg-zinc-900 flex items-center justify-center">
+                        <span className="text-2xl">📷</span>
+                      </div>
+                      <p>Camera inactive</p>
+                    </div>
+                  )}
+
+                  {/* Scan Overlay UI */}
+                  {isCameraActive && !loading && (
+                    <div className="absolute inset-0 border-[2px] border-[#39ff14]/30 pointer-events-none">
+                      <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-[#39ff14]" />
+                      <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-[#39ff14]" />
+                      <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-[#39ff14]" />
+                      <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-[#39ff14]" />
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[#39ff14]/50 text-xs tracking-widest uppercase">
+                        Live Feed
+                      </div>
+                    </div>
+                  )}
+
+                  {loading && (
+                    <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center backdrop-blur-sm z-20">
+                      <Loader2 className="animate-spin text-[#39ff14] mb-4" size={40} />
+                      <p className="text-white font-mono uppercase tracking-widest text-sm">Analyzing Environment...</p>
+                      <p className="text-[#39ff14] mt-2 font-mono">{scanProgress}%</p>
+                    </div>
+                  )}
+                </div>
+
+                <h3 className="text-xl font-bold text-white mb-2">Live Environment Scan</h3>
+                <p className="text-zinc-400 mb-8 max-w-md mx-auto">
+                  Pan your camera across the facility reception or signage. Our AI will verify the authenticity of the medical center.
+                </p>
+
+                <div className="flex flex-wrap justify-center gap-4">
+                  {isCameraActive ? (
+                    <>
+                      <button onClick={performLiveAnalysis} disabled={loading}
+                        className="px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-all shadow-[0_0_20px_rgba(220,38,38,0.4)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                        {loading ? "Scanning..." : "Start Scan"}
+                      </button>
+                      <button onClick={toggleCamera} disabled={loading} className="px-4 py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg transition-all">
+                        Switch Cam
+                      </button>
+                    </>
+                  ) : (
+                    <button onClick={startCamera} className="px-8 py-3 bg-[#39ff14] hover:bg-[#32cc11] text-black font-bold rounded-lg transition-all shadow-[0_0_20px_rgba(57,255,20,0.4)]">
+                      Activate Camera
+                    </button>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="py-10">
+                <div className="mb-6">
+                  <div className={`w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-4 ${kycResult.verified ? 'bg-[#39ff14]/20 text-[#39ff14]' : 'bg-red-500/20 text-red-500'}`}>
+                    {kycResult.verified ? <ShieldCheck size={48} /> : <LogOut size={48} />}
+                  </div>
+                  <h2 className={`text-2xl font-bold mb-2 ${kycResult.verified ? 'text-[#39ff14]' : 'text-red-500'}`}>
+                    {kycResult.verified ? 'Verification Successful' : 'Verification Failed'}
+                  </h2>
+                  <p className="text-zinc-300 italic max-w-md mx-auto">"{kycResult.reasoning}"</p>
+                </div>
+
+                {kycResult.verified ? (
+                  <div className="flex items-center justify-center gap-3 text-[#39ff14] animate-pulse">
+                    <Loader2 className="animate-spin" size={20} />
+                    <span className="font-mono">INITIALIZING ADMIN DASHBOARD...</span>
+                  </div>
+                ) : (
+                  <button onClick={() => { setKycResult(null); startCamera(); }} className="px-6 py-2 border border-zinc-700 hover:bg-zinc-800 rounded-lg text-white transition-all">
+                    Try Again
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
-// --- Auth Landing Component (Local) ---
+import { AuthComponent } from './components/ui/sign-up';
+import { AnimatedLoginPage } from './components/ui/animated-characters-login-page';
+
+// ... (previous helper components like AuthLanding could be simplified or replaced)
+
 function AuthLanding({ onLogin, onSignup }) {
   const [mode, setMode] = useState('landing'); // 'landing', 'login', 'signup-patient', 'signup-hospital'
-  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
 
-  const inputStyle = { width: '100%', padding: '12px', background: '#111', border: '1px solid #333', borderRadius: '6px', color: '#fff' };
-  const cardStyle = { padding: '30px', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', border: '1px solid #333' };
-  const iconBoxStyle = { background: '#111', padding: '20px', borderRadius: '50%', marginBottom: '20px', border: '1px solid #222' };
-
-  const BackButton = () => (
-    <button onClick={() => setMode('landing')} style={{ position: 'absolute', top: '20px', left: '20px', background: 'none', border: 'none', color: '#666', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', zIndex: 10 }}>
-      ← Back
-    </button>
-  );
-
-  const handleLogin = (e) => {
-    e.preventDefault();
-    // Simulate Login
-    const role = formData.email.includes('hospital') ? 'hospital' : 'patient';
-    onLogin({ name: 'Test User', email: formData.email, role });
+  // New Signup Component Handler
+  const handleAuthSuccess = () => {
+    // Defaulting to "patient" role for this new flow as requested,
+    // or we could add role selection inside AuthComponent if needed.
+    // For now, assuming "User" name and "Patient" role for the fancy flow.
+    onSignup({ name: 'New User', email: 'user@example.com', role: 'patient' });
   };
 
-  const handleSignup = (role) => (e) => {
-    e.preventDefault();
-    onSignup({ name: formData.name, email: formData.email, role });
-  };
-
-  if (mode === 'login') {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', padding: '20px' }}>
-        <BackButton />
-        <form onSubmit={handleLogin} className="card" style={{ padding: '40px', display: 'flex', flexDirection: 'column', gap: '20px', width: '100%', maxWidth: '400px' }}>
-          <h2 style={{ textAlign: 'center' }}>Welcome Back</h2>
-          <input required type="email" placeholder="Email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} style={inputStyle} />
-          <input required type="password" placeholder="Password" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} style={inputStyle} />
-          <button className="btn-primary">Sign In</button>
-          <p style={{ color: '#666', fontSize: '0.8rem', textAlign: 'center' }}>Tip: Use 'hospital@test.com' to simulate hospital role.</p>
-        </form>
-      </div>
-    );
+  if (mode === 'landing') {
+    return <HeroSection onLogin={() => setMode('login')} onSignup={() => setMode('signup-patient')} />;
   }
 
   if (mode === 'signup-patient') {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', padding: '20px' }}>
-        <BackButton />
-        <form onSubmit={handleSignup('patient')} className="card" style={{ padding: '40px', display: 'flex', flexDirection: 'column', gap: '20px', width: '100%', maxWidth: '400px' }}>
-          <h2 style={{ textAlign: 'center' }}>Patient Registration</h2>
-          <input required type="text" placeholder="Full Name" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} style={inputStyle} />
-          <input required type="email" placeholder="Email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} style={inputStyle} />
-          <input required type="password" placeholder="Create Password" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} style={inputStyle} />
-          <button className="btn-primary">Create Account</button>
-        </form>
+      <div style={{ position: 'relative', width: '100%', minHeight: '100vh', background: '#000' }}>
+        <button
+          onClick={() => setMode('landing')}
+          style={{ position: 'absolute', top: '20px', left: '20px', zIndex: 50, background: 'rgba(0,0,0,0.5)', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+        >
+          <span>←</span> Back
+        </button>
+        <AnimatedLoginPage
+          initialMode="signup"
+          onLoginSuccess={(data) => onLogin({ name: data?.name || 'User', email: data?.email || 'user@example.com', role: data?.role || 'patient' })}
+          onSignupSuccess={(data) => onSignup({ name: data.name, email: data.email, role: data.role })}
+        />
       </div>
     );
   }
 
-  if (mode === 'signup-hospital') {
+  // ... (keep existing login/hospital logic below for now, or just return null if unreachable)
+
+  if (mode === 'login') {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', padding: '20px' }}>
-        <BackButton />
-        <form onSubmit={handleSignup('hospital')} className="card" style={{ padding: '40px', width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <h2 style={{ textAlign: 'center', color: 'var(--accent-color)' }}>Facility Registration</h2>
-          <input type="email" placeholder="Official Email" required value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} style={inputStyle} />
-          <input type="password" placeholder="Password" required value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} style={inputStyle} />
-          <button className="btn-secondary">Start Verification</button>
-        </form>
+      <div style={{ position: 'relative', width: '100%', minHeight: '100vh', background: '#000' }}>
+        <button
+          onClick={() => setMode('landing')}
+          style={{ position: 'absolute', top: '20px', left: '20px', zIndex: 50, background: 'rgba(0,0,0,0.5)', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+        >
+          <span>←</span> Back
+        </button>
+        <AnimatedLoginPage
+          initialMode="login"
+          onLoginSuccess={(data) => onLogin({ name: data?.name || 'User', email: data?.email || 'user@example.com', role: data?.role || 'patient' })}
+          onSignupSuccess={() => onSignup({ name: 'New User', email: 'newuser@example.com', role: 'patient' })}
+        />
       </div>
     );
   }
 
-  return (
-    <div className="container" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', maxWidth: '100%' }}>
-      <div style={{
-        width: '100px', height: '100px', background: 'var(--accent-glow)', borderRadius: '50%',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px', border: '3px solid var(--accent-color)'
-      }}>
-        <ShieldCheck size={48} color="var(--accent-color)" />
-      </div>
-
-      <h1 style={{ fontSize: '3rem', marginBottom: '16px', lineHeight: '1.1' }}>
-        Lagos Health <span style={{ color: 'var(--accent-color)' }}>AI</span>
-      </h1>
-      <p style={{ color: 'var(--text-secondary)', fontSize: '1.2rem', maxWidth: '500px', marginBottom: '60px' }}>
-        Secure, intelligent healthcare access. Local & Fast.
-      </p>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', width: '100%', maxWidth: '800px' }}>
-        <div className="card" style={cardStyle} onClick={() => setMode('login')}>
-          <div style={iconBoxStyle}><User size={32} color="#fff" /></div>
-          <h3>Existing User</h3>
-          <p style={{ color: '#666', marginBottom: '20px' }}>Log in to account.</p>
-        </div>
-
-        <div className="card" style={cardStyle} onClick={() => setMode('signup-patient')}>
-          <div style={iconBoxStyle}><HeartPulse size={32} color="var(--accent-color)" /></div>
-          <h3>I am a Patient</h3>
-          <p style={{ color: '#666', marginBottom: '20px' }}>Get screened & find doctors.</p>
-        </div>
-
-        <div className="card" style={cardStyle} onClick={() => setMode('signup-hospital')}>
-          <div style={iconBoxStyle}><Building2 size={32} color="var(--accent-color)" /></div>
-          <h3>Hospital Admin</h3>
-          <p style={{ color: '#666', marginBottom: '20px' }}>Manage facility & doctors.</p>
-        </div>
-      </div>
-    </div>
-  );
+  return null;
 }
+
 
 function App() {
   const [user, setUser] = useState(() => {
@@ -504,18 +536,35 @@ function App() {
       return 'hospital-setup';
     }
 
+    // Hash overrides verification status for dev access using '#admin'
+    if (window.location.hash === '#admin') return 'admin';
+    if (window.location.hash === '#map') return 'map';
+    if (window.location.hash === '#crowdfunding') return 'crowdfunding';
+    if (window.location.hash === '#hospital-setup') return 'hospital-setup';
+
     // Check for verification status persistence
     const verificationStatus = localStorage.getItem('hospital_verification_status');
     if (verificationStatus === 'pending') {
       return 'hospital-setup';
     }
 
-    // Then check hash
-    if (window.location.hash === '#map') return 'map';
-    if (window.location.hash === '#hospital-setup') return 'hospital-setup';
-    if (window.location.hash === '#admin') return 'admin';
-    return 'welcome';
+    try {
+      const savedUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      if (savedUser.role === 'hospital') return 'admin';
+      if (savedUser.role === 'patient') return 'wizard'; // Scanner page
+    } catch (e) { }
+
+    return 'wizard';
   });
+
+  // DEV: Auto-login as admin if accessing #admin directly
+  useEffect(() => {
+    if (view === 'admin' && !user.isAuthenticated) {
+      const dummyAdmin = { isAuthenticated: true, name: 'Dr. Admin', email: 'admin@lagoshealth.com', role: 'hospital' };
+      setUser(dummyAdmin);
+      localStorage.setItem('currentUser', JSON.stringify(dummyAdmin));
+    }
+  }, [view, user.isAuthenticated]);
 
   // Sync view to hash
   useEffect(() => {
@@ -530,9 +579,11 @@ function App() {
     const newUser = { ...userData, isAuthenticated: true };
     setUser(newUser);
     localStorage.setItem('currentUser', JSON.stringify(newUser));
-    if (newUser.role === 'hospital' && view !== 'hospital-setup') {
-      // Check if setup needed? For now just go to welcome or admin
-      setView('welcome');
+
+    if (newUser.role === 'hospital') {
+      setView('admin');
+    } else {
+      setView('wizard'); // Redirect to Scanner
     }
   };
 
@@ -544,7 +595,7 @@ function App() {
     if (userData.role === 'hospital') {
       setView('hospital-setup');
     } else {
-      setView('welcome');
+      setView('wizard'); // Redirect to Scanner
     }
   };
 
@@ -561,7 +612,7 @@ function App() {
   const [doctors, setDoctors] = useState(initialDoctors);
   const [clinicsData, setClinicsData] = useState(initialClinics);
   // Hardcoded key as requested by user
-  const [apiKey, setApiKey] = useState("AIzaSyD3R0Jmq-Rf-fotVidF4FWtVuciAm5yllo");
+  const [apiKey, setApiKey] = useState("AIzaSyDKG_J-TMbaQ42C2GJVJxLmtQHlrF_ssqc");
   const [showKeyInput, setShowKeyInput] = useState(false);
 
   // Update a doctor's status
@@ -683,8 +734,14 @@ function App() {
   };
 
   const handleBookAppointment = (clinic) => {
-    alert(`Appointment Request Sent to ${clinic.name}! \n\nA confirmation SMS has been sent to your phone.`);
-    setView('welcome');
+    // Open Calendar for scheduling
+    window.open("https://calendar.app.google/HchmC7HacPvPHBnA9", "_blank");
+    // Do NOT redirect to welcome. Maybe stay on summary or go to dashboard?
+    // User said "remove this page... http://localhost:5194/#welcome".
+    // I will set view to 'patient-dashboard' to be safe, or just keep it current.
+    // "remove this page as its not needed after clicked on book appointment... it implies we move on".
+    // I will redirect to 'patient-dashboard' in the background so when they come back they are central.
+    setView('patient-dashboard');
   };
 
   const handleHospitalSetupComplete = (newHospital, newDoctors) => {
@@ -710,9 +767,14 @@ function App() {
   return (
     <>
       <Toaster />
-      <div style={{ minHeight: '100vh', background: 'var(--bg-color)', color: 'var(--text-primary)' }}>
-        {/* Active Navigation Bar */}
-        {view !== 'hospital-setup' && <Navbar currentView={view} setView={setView} userRole={user.role} />}
+      <div style={{ minHeight: '100vh', background: (view === 'wizard' || view === 'map' || view === 'interview' || view === 'summary' || view === 'crowdfunding') ? '#000000' : '#ffffff', color: (view === 'wizard' || view === 'map' || view === 'interview' || view === 'summary' || view === 'crowdfunding') ? '#ffffff' : '#000000', transition: 'background-color 0.5s ease' }}>
+        {/* Patient Navigation Bar */}
+        {user.isAuthenticated && user.role === 'patient' && (view === 'wizard' || view === 'map' || view === 'patient-dashboard' || view === 'interview' || view === 'screener' || view === 'crowdfunding') && (
+          <PatientNavbar currentView={view} onNavigate={setView} />
+        )}
+
+        {/* Active Navigation Bar - REMOVED as per request */}
+        {/* {view !== 'hospital-setup' && view !== 'admin' && !(view === 'welcome' && user.role !== 'hospital') && <Navbar currentView={view} setView={setView} userRole={user.role} />} */}
 
         <div style={{ position: 'fixed', top: '15px', right: '20px', zIndex: 1001, display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{ background: '#222', padding: '6px 12px', borderRadius: '20px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -746,57 +808,30 @@ function App() {
             />
           )}
 
-          {view === 'welcome' && (
-            user.role === 'hospital' ? (
-              <div className="container" style={{ justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
-                <div style={{
-                  width: '80px', height: '80px',
-                  background: 'var(--accent-glow)',
-                  borderRadius: '50%',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  marginBottom: '24px',
-                  border: '2px solid var(--accent-color)'
-                }}>
-                  <div style={{ width: '40px', height: '40px', background: 'var(--accent-color)', borderRadius: '50%' }}></div>
-                </div>
-                <h1 style={{ fontSize: '2.5rem', marginBottom: '16px', lineHeight: '1.1' }}>
-                  Welcome back, <br />
-                  <span style={{ color: 'var(--accent-color)' }}>{user?.name || 'User'}</span>
-                </h1>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', maxWidth: '400px', marginBottom: '40px' }}>
-                  Manage your hospital facilities and doctors.
-                </p>
-                <div style={{ display: 'flex', gap: '16px' }}>
-                  <button
-                    className="btn-secondary"
-                    onClick={() => setView('admin')}
-                    style={{ minWidth: '160px', borderColor: '#333' }}
-                  >
-                    Hospital Admin
-                  </button>
-                </div>
-                <button
-                  onClick={() => setShowKeyInput(!showKeyInput)}
-                  style={{ background: 'none', border: 'none', color: '#333', fontSize: '0.8rem', marginTop: '40px' }}
-                >
-                  {apiKey ? 'API Key Set' : 'Configure API Key'}
-                </button>
-              </div>
-            ) : <WarpShaderHero>
-              <div style={{ width: '100%', maxWidth: '600px' }}>
-                <PromptInputBox onSend={handleSend} placeholder="Ask me anything about health..." />
-              </div>
-            </WarpShaderHero>
-          )}
 
-          {view === 'wizard' && <Wizard onComplete={handleWizardComplete} />}
 
-          {view === 'interview' && (
-            <AIInterview
-              initialData={wizardData}
-              apiKey={apiKey}
-              onComplete={handleInterviewComplete}
-            />
+          {(view === 'wizard' || view === 'interview') && (
+            <div style={{ position: 'relative', minHeight: '100vh', width: '100%' }}>
+              <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+                <SmoothWavyCanvas
+                  backgroundColor="#000000"
+                  primaryColor="120, 120, 120"
+                  secondaryColor="80, 80, 80"
+                  accentColor="74, 222, 128"
+                  lineOpacity={0.3}
+                />
+              </div>
+              <div style={{ position: 'relative', zIndex: 10 }}>
+                {view === 'wizard' && <Wizard onComplete={handleWizardComplete} />}
+                {view === 'interview' && (
+                  <AIInterview
+                    initialData={wizardData}
+                    apiKey={apiKey}
+                    onComplete={handleInterviewComplete}
+                  />
+                )}
+              </div>
+            </div>
           )}
 
           {view === 'loading' && (
@@ -806,6 +841,7 @@ function App() {
               <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
             </div>
           )}
+
 
           {view === 'summary' && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -821,6 +857,8 @@ function App() {
               </div>
             </div>
           )}
+
+          {view === 'crowdfunding' && <CrowdFundingView onNavigate={setView} />}
 
           {view === 'matching' && (
             <DoctorMatcher
@@ -838,9 +876,18 @@ function App() {
           )}
 
           {view === 'admin' && (
-            <HospitalAdmin
+            <HospitalDashboard
+              hospitalName={user.role === 'hospital' ? user.name : "Lagos General"}
+              onLogout={handleLogout}
               doctors={doctors}
               onUpdateStatus={handleUpdateDoctorStatus}
+            />
+          )}
+
+          {view === 'patient-dashboard' && (
+            <PatientDashboard
+              userName={user.name}
+              onLogout={handleLogout}
             />
           )}
         </div>

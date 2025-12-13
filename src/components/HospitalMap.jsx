@@ -20,18 +20,18 @@ function ChangeView({ center, zoom }) {
     return null;
 }
 
-export default function HospitalMap({ clinics, recommendedClinic, onBook }) {
+export default function HospitalMap({ clinics = [], recommendedClinic, onBook }) {
     const [selectedClinic, setSelectedClinic] = useState(recommendedClinic);
 
     const center = selectedClinic?.coordinates || [6.5244, 3.3792]; // Default Lagos center
 
     return (
-        <div className="container" style={{ padding: 0, height: '100vh', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ padding: '16px', background: '#111', borderBottom: '1px solid #333', zIndex: 10 }}>
-                <h2 style={{ margin: 0, fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <MapPin color="var(--accent-color)" /> Hospital Intelligence Map
+        <div className="w-full h-screen" style={{ padding: 0, display: 'flex', flexDirection: 'column', background: '#000' }}>
+            <div style={{ padding: '16px', background: 'rgba(0, 0, 0, 0.8)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(255,255,255,0.1)', zIndex: 10, paddingTop: '80px' }}>
+                <h2 style={{ margin: 0, fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px', color: '#fff' }}>
+                    <MapPin color="#22c55e" /> Hospital Intelligence Map
                 </h2>
-                <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)' }}>
                     Showing best matches based on proximity, cost, and facilities.
                 </p>
             </div>

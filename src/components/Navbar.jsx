@@ -33,7 +33,7 @@ export default function Navbar({ currentView, setView, userRole }) {
                 }}
             >
                 <div style={{ width: '12px', height: '12px', background: 'var(--accent-color)', borderRadius: '50%' }}></div>
-                <span>LAGOS HEALTH AI</span>
+                <span>ExpressCare AI</span>
             </div>
 
             <div style={{ display: 'flex', gap: '24px' }}>

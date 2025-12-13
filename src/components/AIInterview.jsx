@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { Send, User, Bot, Loader2 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AIInterview({ initialData, apiKey, onComplete }) {
     const [history, setHistory] = useState([]);
@@ -9,10 +9,10 @@ export default function AIInterview({ initialData, apiKey, onComplete }) {
     const [loading, setLoading] = useState(true);
     const [questionCount, setQuestionCount] = useState(0);
     const chatEndRef = useRef(null);
+    const [activeModel, setActiveModel] = useState("Gemini 2.5 Flash");
 
-    // Initialize AI with Gemini 2.5 Flash (User Requested)
+    // Initialize AI
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const MAX_QUESTIONS = 3;
 
@@ -22,26 +22,60 @@ export default function AIInterview({ initialData, apiKey, onComplete }) {
 
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        // Auto-focus input when loading finishes
+        if (!loading) {
+            document.querySelector('input[type="text"]')?.focus();
+        }
     }, [history, loading]);
+
+    const formatWizardData = (data) => {
+        if (!data) return "No initial data provided.";
+        return Object.entries(data)
+            .map(([key, value]) => `- ${key.replace(/([A-Z])/g, ' $1').trim()}: ${Array.isArray(value) ? value.join(', ') : value}`)
+            .join('\n');
+    };
+
+    const generateWithFallback = async (prompt) => {
+        try {
+            // Priority: User Requested Model (Gemini 2.5 Flash)
+            const modelPrimary = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+            const result = await modelPrimary.generateContent(prompt);
+            setActiveModel("Gemini 2.5 Flash");
+            return result.response.text();
+
+        } catch (error) {
+            console.warn("Gemini 2.5 Flash failed (possibly unavailable), attempting fallback to 1.5-flash...", error);
+            try {
+                // Fallback: Stable Model (Gemini 1.5 Flash)
+                const modelFallback = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+                const result = await modelFallback.generateContent(prompt);
+                setActiveModel("Gemini 1.5 Flash (Fallback)");
+                return result.response.text();
+            } catch (fallbackError) {
+                console.error("All Gemini models failed:", fallbackError);
+                throw fallbackError;
+            }
+        }
+    };
 
     const startInterview = async () => {
         try {
             const prompt = `
-        You are an advanced medical triage AI assistant for Lagos, Nigeria.
+        You are an advanced medical diagnostic AI for Lagos Health Screener.
         
-        MEDICAL CONTEXT (RAG DATA):
-        Patient Initial Form Data: ${JSON.stringify(initialData, null, 2)}
+        RETRIEVED PATIENT RECORDS (RAG CONTEXT):
+        ${formatWizardData(initialData)}
 
         INSTRUCTIONS:
-        - Analyze the patient's initial data.
-        - Ask EXACTLY ONE follow-up question to clarify their condition.
-        - Focus on ruling out emergencies or understanding severity.
-        - Be empathetic but professional.
-        - Do NOT diagnose yet.
+        1. Contextualize: Review the patient's records above used as your Knowledge Base.
+        2. Acknowledge: Confirm you have received their specific symptoms (e.g., "I see your report regarding...").
+        3. Investigate: Ask ONE high-value clinical question to narrow down the differential diagnosis.
+        4. Tone: Professional, clinically precise, yet accessible.
+        
+        Output only the response message.
       `;
 
-            const result = await model.generateContent(prompt);
-            const text = result.response.text();
+            const text = await generateWithFallback(prompt);
 
             setHistory([
                 { role: 'model', text: text }
@@ -49,9 +83,8 @@ export default function AIInterview({ initialData, apiKey, onComplete }) {
             setLoading(false);
         } catch (error) {
             console.error("AI Error:", error);
-            // Fallback: Simulate AI behavior if API fails (Quota/Error)
             setHistory([
-                { role: 'model', text: "I see. Could you tell me a bit more about how severe the pain is right now on a scale of 1 to 10?" }
+                { role: 'model', text: "System Alert: Unable to connect to Neural Core. Please verify your API Key is valid and has access to Gemini API." }
             ]);
             setLoading(false);
         }
@@ -69,32 +102,28 @@ export default function AIInterview({ initialData, apiKey, onComplete }) {
         setQuestionCount(newCount);
 
         try {
-            // Build conversation history for context
             if (newCount >= MAX_QUESTIONS) {
-                // Time to wrap up
                 onComplete({ ...initialData, interviewTranscript: [...history, { role: 'user', text: userMsg }] });
-                return;
             } else {
-                // Continue interview with full context awareness
                 const prompt = `
-          You are Dr. AI, a triage assistant.
+          You are Dr. AI, conducting a clinical assessment.
+
+          RETRIEVED CONTEXT (RAG):
+          ${formatWizardData(initialData)}
+
+          SESSION TRANSCRIPT:
+          ${history.map(h => `${h.role === 'user' ? 'PATIENT' : 'DOCTOR'}: ${h.text}`).join('\n')}
+          PATIENT LATEST UPDATE: ${userMsg}
+
+          CLINICAL REASONING:
+          - Synthesize the new information with the retrieved context.
+          - Formulate a targeted follow-up question to assess severity or etiology.
+          - Maintain context continuity.
           
-          MEDICAL CONTEXT (KNOWN DATA):
-          ${JSON.stringify(initialData, null, 2)}
-
-          CONVERSATION HISTORY:
-          ${history.map(h => `${h.role.toUpperCase()}: ${h.text}`).join('\n')}
-          USER: ${userMsg}
-
-          TASK:
-          - Review the entire context above.
-          - Ask ONE relevant follow-up question based on what the user just said AND their initial form data.
-          - If they mentioned a symptom earlier, you can reference it.
-          - Keep it short.
+          Response:
         `;
 
-                const result = await model.generateContent(prompt);
-                const text = result.response.text();
+                const text = await generateWithFallback(prompt);
 
                 setHistory(prev => [...prev, { role: 'model', text: text }]);
                 setLoading(false);
@@ -102,122 +131,92 @@ export default function AIInterview({ initialData, apiKey, onComplete }) {
 
         } catch (error) {
             console.error("AI Error:", error);
-            // Fallback mock response
             setTimeout(() => {
-                setHistory(prev => [...prev, { role: 'model', text: "Thank you for sharing that. Is there anything else you think I should know?" }]);
+                setHistory(prev => [...prev, { role: 'model', text: "Connection interrupted. Please try again." }]);
                 setLoading(false);
             }, 1000);
         }
     };
 
     return (
-        <div className="container" style={{ maxWidth: '700px' }}>
-            <div className="card" style={{ height: '80vh', display: 'flex', flexDirection: 'column', padding: '0', overflow: 'hidden' }}>
+        <div className="w-full max-w-3xl mx-auto flex flex-col h-[85vh] relative z-10 pt-8">
+            {/* Glass Card Container */}
+            <div className="flex-1 flex flex-col overflow-hidden rounded-3xl border border-white/10 shadow-2xl backdrop-blur-xl bg-black/40">
 
                 {/* Header */}
-                <div style={{ padding: '16px', borderBottom: '1px solid #333', background: '#1a1a1a', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ width: '10px', height: '10px', background: 'var(--accent-color)', borderRadius: '50%', boxShadow: '0 0 10px var(--accent-color)' }}></div>
-                        <span style={{ fontWeight: 'bold' }}>Dr. AI Assistant (Gemini 2.5)</span>
+                <div className="px-6 py-4 border-b border-white/5 bg-black/40 flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                        <div className="relative">
+                            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+                            <div className="absolute inset-0 w-3 h-3 bg-green-500 rounded-full animate-ping opacity-20" />
+                        </div>
+                        <span className="font-semibold text-white tracking-wide">AI Medical Assistant</span>
                     </div>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                        Question {Math.min(questionCount + 1, MAX_QUESTIONS)} / {MAX_QUESTIONS}
+                    <span className="text-xs font-medium text-white/40 uppercase tracking-wider">
+                        {activeModel}
                     </span>
                 </div>
 
                 {/* Chat Area */}
-                <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
                     {history.map((msg, idx) => (
                         <motion.div
                             key={idx}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            style={{
-                                alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
-                                maxWidth: '80%',
-                                display: 'flex',
-                                gap: '12px',
-                                flexDirection: msg.role === 'user' ? 'row-reverse' : 'row'
-                            }}
+                            className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
                         >
-                            <div style={{
-                                width: '32px', height: '32px',
-                                borderRadius: '50%',
-                                background: msg.role === 'user' ? '#333' : 'rgba(57, 255, 20, 0.1)',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                border: msg.role === 'model' ? '1px solid var(--accent-color)' : 'none',
-                                flexShrink: 0
-                            }}>
-                                {msg.role === 'user' ? <User size={16} /> : <Bot size={16} color="var(--accent-color)" />}
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${msg.role === 'user' ? 'bg-white text-black' : 'bg-green-500/10 border border-green-500/20'
+                                }`}>
+                                {msg.role === 'user' ? <User size={20} /> : <Bot size={20} className="text-green-400" />}
                             </div>
 
-                            <div style={{
-                                background: msg.role === 'user' ? '#333' : '#1a1a1a',
-                                padding: '12px 16px',
-                                borderRadius: '12px',
-                                borderTopLeftRadius: msg.role === 'model' ? '0' : '12px',
-                                borderTopRightRadius: msg.role === 'user' ? '0' : '12px',
-                                border: msg.role === 'model' ? '1px solid #333' : 'none',
-                                lineHeight: '1.5'
-                            }}>
+                            <div className={`max-w-[80%] p-4 rounded-2xl text-lg leading-relaxed ${msg.role === 'user'
+                                ? 'bg-white text-black rounded-tr-none shadow-lg'
+                                : 'bg-white/5 border border-white/10 text-white rounded-tl-none backdrop-blur-md'
+                                }`}>
                                 {msg.text}
                             </div>
                         </motion.div>
                     ))}
 
                     {loading && (
-                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                            <div style={{
-                                width: '32px', height: '32px',
-                                borderRadius: '50%',
-                                background: 'rgba(57, 255, 20, 0.1)',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                border: '1px solid var(--accent-color)'
-                            }}>
-                                <Loader2 size={16} className="spin" color="var(--accent-color)" style={{ animation: 'spin 1s linear infinite' }} />
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="flex gap-4"
+                        >
+                            <div className="w-10 h-10 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center">
+                                <Loader2 size={20} className="text-green-400 animate-spin" />
                             </div>
-                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Thinking...</span>
-                        </div>
+                            <div className="bg-white/5 border border-white/10 px-4 py-3 rounded-2xl rounded-tl-none text-white/50 text-sm flex items-center gap-2">
+                                <span className="animate-pulse">Analyzing symptoms...</span>
+                            </div>
+                        </motion.div>
                     )}
                     <div ref={chatEndRef} />
                 </div>
 
                 {/* Input Area */}
-                <div style={{ padding: '16px', borderTop: '1px solid #333', background: '#111', display: 'flex', gap: '10px' }}>
-                    <input
-                        type="text"
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                        placeholder="Type your answer..."
-                        style={{
-                            flex: 1,
-                            background: '#050505',
-                            border: '1px solid #333',
-                            padding: '12px',
-                            borderRadius: '8px',
-                            color: '#fff',
-                            outline: 'none'
-                        }}
-                        autoFocus
-                    />
-                    <button
-                        onClick={handleSend}
-                        disabled={loading || !input.trim()}
-                        style={{
-                            background: 'var(--accent-color)',
-                            border: 'none',
-                            borderRadius: '8px',
-                            width: '48px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: loading || !input.trim() ? 'not-allowed' : 'pointer',
-                            opacity: loading || !input.trim() ? 0.5 : 1
-                        }}
-                    >
-                        <Send size={20} color="#000" />
-                    </button>
+                <div className="p-4 bg-black/60 border-t border-white/5">
+                    <div className="relative flex items-center gap-2">
+                        <input
+                            type="text"
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                            placeholder="Type your response..."
+                            className="w-full bg-white/5 border border-white/10 rounded-xl pl-6 pr-14 py-4 text-white placeholder-white/30 focus:outline-none focus:border-green-500/50 focus:bg-white/10 transition-all text-lg"
+                            autoFocus
+                        />
+                        <button
+                            onClick={handleSend}
+                            disabled={loading || !input.trim()}
+                            className="absolute right-2 p-2.5 bg-green-500 hover:bg-green-400 text-black rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <Send size={20} />
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
